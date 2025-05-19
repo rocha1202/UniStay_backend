@@ -1,3 +1,5 @@
+const errorHandler = require('./middleware/errorHandler');
+
 const express = require('express');
 const cors = require('cors');
 
@@ -21,5 +23,14 @@ app.use('/api/reservas', reservationRoutes);
 app.use('/api/avaliacoes', ratingRoutes);
 app.use('/api/eventos', eventRoutes);
 app.use('/api/admin', adminRoutes);
+
+
+// Middleware 404 – rota não encontrada
+app.use((req, res) => {
+  res.status(404).json({ error: 'Rota não encontrada' });
+});
+
+// Middleware de tratamento de erros
+app.use(errorHandler);
 
 module.exports = app;

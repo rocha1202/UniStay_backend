@@ -46,5 +46,7 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ error: 'Erro no login' });
   }
 });
-
+router.get('/erro', (req, res) => {
+  throw new Error('Simulação de falha!');
+});
 module.exports = router;
