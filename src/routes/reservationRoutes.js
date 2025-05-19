@@ -48,26 +48,49 @@ router.get('/recebidas', autenticarToken, async (req, res) => {
 });
 // Confirmar reserva
 router.put('/:id/confirmar', autenticarToken, async (req, res) => {
-    if (req.utilizador.tipo !== 'facilitador') {
-      return res.status(403).json({ error: 'Apenas facilitadores podem confirmar reservas' });
-    }
-  
-    const sucesso = await Reservation.updateEstado(req.params.id, req.utilizador.id, 'confirmada');
-    if (!sucesso) return res.status(403).json({ error: 'Reserva não encontrada ou sem permissão' });
-  
-    res.json({ message: 'Reserva confirmada' });
+  if (req.utilizador.tipo !== 'facilitador') {
+    return res.status(403).json({ error: 'Apenas facilitadores podem confirmar reservas' });
+  }
+
+  const sucesso = await Reservation.updateEstado(req.params.id, req.utilizador.id, 'confirmada');
+  if (!sucesso) return res.status(403).json({ error: 'Reserva não encontrada ou sem permissão' });
+
+  // 🔔 Notificar o estudante
+  const [[{ user_id: estudante_id }]] = await db.execute(
+    'SELECT user_id FROM Reservations WHERE id = ?',
+    [req.params.id]
+  );
+
+  await Notification.create({
+    user_id: estudante_id,
+    titulo: 'Reserva confirmada',
+    mensagem: 'A tua reserva foi confirmada pelo facilitador.'
   });
-  
-  // Cancelar reserva
-  router.put('/:id/cancelar', autenticarToken, async (req, res) => {
-    if (req.utilizador.tipo !== 'facilitador') {
-      return res.status(403).json({ error: 'Apenas facilitadores podem cancelar reservas' });
-    }
-  
-    const sucesso = await Reservation.updateEstado(req.params.id, req.utilizador.id, 'cancelada');
-    if (!sucesso) return res.status(403).json({ error: 'Reserva não encontrada ou sem permissão' });
-  
-    res.json({ message: 'Reserva cancelada' });
+
+  res.json({ message: 'Reserva confirmada' });
+});
+// Cancelar reserva
+router.put('/:id/cancelar', autenticarToken, async (req, res) => {
+  if (req.utilizador.tipo !== 'facilitador') {
+    return res.status(403).json({ error: 'Apenas facilitadores podem cancelar reservas' });
+  }
+
+  const sucesso = await Reservation.updateEstado(req.params.id, req.utilizador.id, 'cancelada');
+  if (!sucesso) return res.status(403).json({ error: 'Reserva não encontrada ou sem permissão' });
+
+  // 🔔 Notificar o estudante
+  const [[{ user_id: estudante_id }]] = await db.execute(
+    'SELECT user_id FROM Reservations WHERE id = ?',
+    [req.params.id]
+  );
+
+  await Notification.create({
+    user_id: estudante_id,
+    titulo: 'Reserva cancelada',
+    mensagem: 'A tua reserva foi cancelada pelo facilitador.'
   });
+
+  res.json({ message: 'Reserva cancelada' });
+});
   
 module.exports = router;
