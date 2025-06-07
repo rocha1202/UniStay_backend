@@ -21,7 +21,7 @@ class Reservation {
     return result.insertId;
   }
 
-  static async findByUser(user_id) {
+  static async findByUser (user_id) {
     const [rows] = await db.execute(
       `SELECT * FROM Reservations WHERE user_id = ?`,
       [user_id]
@@ -38,6 +38,7 @@ class Reservation {
     );
     return rows;
   }
+
   static async updateEstado(id, facilitador_id, novoEstado) {
     const [result] = await db.execute(
       `UPDATE Reservations r
@@ -48,7 +49,20 @@ class Reservation {
     );
     return result.affectedRows > 0;
   }
-  
+//checkAccommodationExists
+  static async checkAccommodationExists(accommodation_id) {
+    const [rows] = await db.execute(
+      'SELECT * FROM Accommodations WHERE id = ?',
+      [accommodation_id]
+    );
+    return rows.length > 0;
+  }
+  static async findById(id) {
+    const [[reserva]] = await db.execute(
+      'SELECT estado, user_id FROM Reservations WHERE id = ?',
+      [id]
+    );
+    return reserva;
+  }
 }
-
 module.exports = Reservation;

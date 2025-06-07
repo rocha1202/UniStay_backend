@@ -3,28 +3,27 @@ const errorHandler = require('./middleware/errorHandler');
 const express = require('express');
 const cors = require('cors');
 
-const authRoutes = require('./routes/authRoutes');
-const protectedRoutes = require('./routes/protectedRoutes');
-const accommodationRoutes = require('./routes/accommodationRoutes'); 
-const reservationRoutes = require('./routes/reservationRoutes');
-const ratingRoutes = require('./routes/ratingRoutes');
-const eventRoutes = require('./routes/eventRoutes');
-const adminRoutes = require('./routes/adminRoutes');
+const utilizadorRoutes = require('./routes/utilizadorRoutes');
+const alojamentoRoutes = require('./routes/alojamentosRoutes'); 
+const reversaRoutes = require('./routes/reservaRoutes');
+const avaliacoesRoutes = require('./routes/avaliacoesRoutes');
+//const eventRoutes = require('./routes/eventRoutes');
 
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use('/api/auth', authRoutes);
-app.use('/api/privado', protectedRoutes);
-app.use('/api/alojamentos', accommodationRoutes); 
-app.use('/api/reservas', reservationRoutes);
-app.use('/api/avaliacoes', ratingRoutes);
-app.use('/api/eventos', eventRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/utilizadores', utilizadorRoutes);
+app.use('/alojamentos', alojamentoRoutes); 
+app.use('/reservas', reversaRoutes);
+app.use('/avaliacoes', avaliacoesRoutes);
 
+// app.use('/eventos', eventRoutes);
 
+app.use('/', (req, res) => {
+   res.send('Bem-vindo à API do Unistay!');
+ });
 // Middleware 404 – rota não encontrada
 app.use((req, res) => {
   res.status(404).json({ error: 'Rota não encontrada' });

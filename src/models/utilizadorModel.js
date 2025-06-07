@@ -1,6 +1,13 @@
 const db = require('../config/db');
 
 class User {
+  static async listarEstudantes() {
+    const [rows] = await db.execute(
+      `SELECT id, nome, email, ativo, aprovado FROM Users WHERE tipo = 'estudante'`
+    );
+    return rows;
+  }
+
   static async create({ nome, email, password, tipo }) {
     const [result] = await db.execute(
       'INSERT INTO Users (nome, email, password, tipo, ativo) VALUES (?, ?, ?, ?, ?)',

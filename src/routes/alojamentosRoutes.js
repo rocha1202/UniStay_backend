@@ -1,5 +1,5 @@
 const express = require('express');
-const Accommodation = require('../models/Accommodation');
+const Alojamentos = require('../models/alojamentoModel');
 const autenticarToken = require('../middleware/auth');
 
 const router = express.Router();
@@ -12,35 +12,27 @@ router.post('/', autenticarToken, async (req, res) => {
 
   try {
     const data = { ...req.body, user_id: req.utilizador.id };
-    const id = await Accommodation.create(data);
+    const id = await Alojamentos.create(data);
     res.status(201).json({ id });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao criar alojamento' });
   }
 });
 
-// Listar todos os alojamentos
-router.get('/', async (req, res) => {
-  try {
-    const alojamentos = await Accommodation.findAll();
-    res.json(alojamentos);
-  } catch (err) {
-    res.status(500).json({ error: 'Erro ao listar alojamentos' });
-  }
-});
-
 // Apagar alojamento (apenas pelo criador)
 router.delete('/:id', autenticarToken, async (req, res) => {
   try {
-    const success = await Accommodation.delete(req.params.id, req.utilizador.id);
+    const success = await Alojamentos.delete(req.params.id, req.utilizador.id);
     if (!success) return res.status(403).json({ error: 'Sem permissão para apagar este alojamento' });
     res.json({ message: 'Alojamento removido' });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao apagar alojamento' });
   }
 });
-// Pesquisa com filtros via query params
-router.get('/pesquisa', async (req, res) => {
+router.get
+
+// Listar todos os alojamentos com pesquisa
+router.get('/', async (req, res) => {
   try {
     const filtros = {
       zona: req.query.zona,
@@ -51,12 +43,15 @@ router.get('/pesquisa', async (req, res) => {
       disponivel_em: req.query.disponivel_em
     };
 
-    const resultados = await Accommodation.search(filtros);
+    const resultados = await Alojamentos.search(filtros);
+    if (resultados.length === 0) {
+      return res.status(404).json({ message: 'Nenhum alojamento encontrado' });
+    } else { 
     res.json(resultados);
+    }
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao pesquisar alojamentos' });
-  }
+  res.status(500).json({ error: 'Erro ao pesquisar alojamentos' });
+}
 });
-
 
 module.exports = router;
