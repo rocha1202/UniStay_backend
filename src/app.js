@@ -5,9 +5,9 @@ const cors = require('cors');
 
 const utilizadorRoutes = require('./routes/utilizadorRoutes');
 const alojamentoRoutes = require('./routes/alojamentosRoutes'); 
-const reversaRoutes = require('./routes/reservaRoutes');
+const resersaRoutes = require('./routes/reservaRoutes');
 const avaliacoesRoutes = require('./routes/avaliacoesRoutes');
-//const eventRoutes = require('./routes/eventRoutes');
+const eventosRoutes = require('./routes/eventosRoutes');
 
 
 const app = express();
@@ -16,10 +16,9 @@ app.use(express.json());
 
 app.use('/utilizadores', utilizadorRoutes);
 app.use('/alojamentos', alojamentoRoutes); 
-app.use('/reservas', reversaRoutes);
+app.use('/reservas', resersaRoutes);
 app.use('/avaliacoes', avaliacoesRoutes);
-
-// app.use('/eventos', eventRoutes);
+app.use('/eventos', eventosRoutes);
 
 app.use('/', (req, res) => {
    res.send('Bem-vindo à API do Unistay!');
