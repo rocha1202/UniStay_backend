@@ -15,7 +15,7 @@ router.post('/', autenticarToken, async (req, res) => {
     const id = await Alojamentos.create(data);
     res.status(201).json({ id });
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao criar alojamento' });
+    res.status(400).json({ error: 'Faltam dados' });
   }
 });
 
@@ -29,7 +29,6 @@ router.delete('/:id', autenticarToken, async (req, res) => {
     res.status(500).json({ error: 'Erro ao apagar alojamento' });
   }
 });
-router.get
 
 // Listar todos os alojamentos com pesquisa
 router.get('/', async (req, res) => {
@@ -40,7 +39,8 @@ router.get('/', async (req, res) => {
       preco_max: req.query.preco_max,
       camas: req.query.camas,
       tipo_quarto: req.query.tipo_quarto,
-      disponivel_em: req.query.disponivel_em
+      disponivel_d1: req.query.disponivel_d1,
+      disponivel_d2: req.query.disponivel_d2,
     };
 
     const resultados = await Alojamentos.search(filtros);

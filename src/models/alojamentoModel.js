@@ -54,16 +54,19 @@ class Alojamentos {
       params.push(filtros.tipo_quarto);
     }
 
-    if (filtros.disponivel_em) {
+    if (filtros.disponivel_d1 && filtros.disponivel_d2) {
       query += `
-        AND id NOT IN (
-          SELECT accommodation_id FROM Reservations
-          WHERE ? BETWEEN data_inicio AND data_fim
-          AND estado = 'confirmada'
-        )
-      `;
-      params.push(filtros.disponivel_em);
+    AND id NOT IN (
+      SELECT accommodation_id FROM Reservations
+      WHERE NOT (
+        data_fim < ? OR data_inicio > ?
+      )
+      AND (estado = 'confirmada' OR estado = 'pendente')
+    )
+  `;
+      params.push(filtros.disponivel_d1, filtros.disponivel_d2);
     }
+
 
     const [rows] = await db.execute(query, params);
     return rows;
