@@ -59,7 +59,7 @@ router.post('/login', async (req, res) => {
     if (!user || !passwordMatch) return res.status(401).json({ error: 'Credenciais inválidas ou não existe!' });
 
     if (user.ativo === 0) {
-      return res.status(403).json({ error: 'Conta bloqueada pelo administrador' });
+      return res.status(401).json({ error: 'Conta bloqueada pelo administrador' });
     }
 
     const token = jwt.sign(
@@ -127,53 +127,54 @@ router.get('/:tipo/:estado', autenticarToken, isAdmin, async (req, res) => {
 });
 
 
-// // Ver facilitadores pendentes
-// router.get('/:tipo/pendentes', autenticarToken, isAdmin, async (req, res) => {
-//   if (req.params.tipo !== 'facilitadores') {
-//     return res.status(400).json({ error: 'Tipo inválido.' });
-//   }
-//   const lista = await Admin.listarFacilitadoresPendentes();
-//   res.json(lista);
-// });
+//Bloquear/desbloquear estudante ou estado do facilitador
+router.put('/:tipo/:id', autenticarToken, isAdmin, async (req, res) => {
+  try {
 
-//Promover/Despromover facilitador 
-router.put('/facilitadores/:id', autenticarToken, isAdmin, async (req, res) => {
-  const sucesso = await Admin.alterarStatusFacilitador(req.params.id, true);
-  if (!sucesso) return res.status(404).json({ error: 'Facilitador não encontrado' });
+    if (req.params.tipo === 'estudantes') {
+      const sucesso = await Admin.alterarStatusEstudante(req.params.id, true);
+      if (!sucesso) return res.status(404).json({ error: 'Estudante não encontrado' });
 
-  const facilitador = await Admin.listarFacilitadores();
-  req.params.nome = facilitador.find(f => f.id === parseInt(req.params.id)).nome;
-  req.params.email = facilitador.find(f => f.id === parseInt(req.params.id)).email;
-  req.params.ativo = facilitador.find(f => f.id === parseInt(req.params.id)).ativo; // Definindo o estado como ativo
-  res.json({ message: 'Estado do facilitador alterado', id: req.params.id, nome: req.params.nome, email: req.params.email, ativo: req.params.ativo });
+      const estudante = await Admin.listarEstudantes();
+      req.params.nome = estudante.find(f => f.id === parseInt(req.params.id)).nome;
+      req.params.email = estudante.find(f => f.id === parseInt(req.params.id)).email;
+      req.params.ativo = estudante.find(f => f.id === parseInt(req.params.id)).ativo;
+      return res.json({ message: 'Estado do estudante alterado', id: req.params.id, nome: req.params.nome, email: req.params.email, ativo: req.params.ativo });
 
-}
-);
+    } else if (req.params.tipo === 'facilitadores') {
+      const sucesso = await Admin.alterarStatusFacilitador(req.params.id, true);
+      if (!sucesso) return res.status(404).json({ error: 'Facilitador não encontrado' });
 
-// Listar estudantes
-// router.get('/', autenticarToken, isAdmin, async (req, res) => {
-//   const estudante = await Estudantes.listarEstudantes();
-//   res.json(estudante);
-// });
+      const facilitador = await Admin.listarFacilitadores();
+      req.params.nome = facilitador.find(f => f.id === parseInt(req.params.id)).nome;
+      req.params.email = facilitador.find(f => f.id === parseInt(req.params.id)).email;
+      req.params.ativo = facilitador.find(f => f.id === parseInt(req.params.id)).ativo; // Definindo o estado como ativo
+      return res.json({ message: 'Estado do facilitador alterado', id: req.params.id, nome: req.params.nome, email: req.params.email, ativo: req.params.ativo });
 
-//Bloquear/desbloquear estudantes
-router.put('/:id', autenticarToken, isAdmin, async (req, res) => {
-  const sucesso = await Admin.alterarStatusEstudante(req.params.id, true);
-  if (!sucesso) return res.status(404).json({ error: 'Estudante não encontrado' });
-
-  const estudante = await Admin.listarEstudantes();
-  req.params.nome = estudante.find(f => f.id === parseInt(req.params.id)).nome;
-  req.params.email = estudante.find(f => f.id === parseInt(req.params.id)).email;
-  req.params.ativo = estudante.find(f => f.id === parseInt(req.params.id)).ativo;
-  res.json({ message: 'Estado do estudante alterado', id: req.params.id, nome: req.params.nome, email: req.params.email, ativo: req.params.ativo });
+    } else {
+      return res.status(400).json({ error: 'Tipo inválido. Use "estudantes" ou "facilitadores".' });
+    }
+  } catch (err) {
+    console.error('Erro ao alterar estado:', err);
+    res.status(500).json({ error: 'Erro ao alterar estado do utilizador' });
+  }
 
 }
 );
 //Apagar utilizador
 router.delete('/:id', autenticarToken, isAdmin, async (req, res) => {
-  const sucesso = await Admin.removerUtilizador(req.params.id);
-  if (!sucesso) return res.status(404).json({ error: 'Utilizador não encontrado' });
-  res.json({ message: 'Utilizador removido' });
+  try {
+    if (req.params.id === '5') {
+      return res.status(400).json({ error: 'Não é possível remover o utilizador administrador' });
+    }
+    const sucesso = await Admin.removerUtilizador(req.params.id);
+    if (!sucesso) return res.status(404).json({ error: 'Utilizador não encontrado' });
+    res.json({ message: 'Utilizador removido' });
+
+  } catch (err) {
+    console.error('Erro ao remover utilizador:', err);
+    res.status(500).json({ error: 'Erro ao remover utilizador' });
+  }
 });
 
 
