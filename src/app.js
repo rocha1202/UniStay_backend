@@ -5,7 +5,7 @@ const cors = require('cors');
 
 const utilizadorRoutes = require('./routes/utilizadorRoutes');
 const alojamentoRoutes = require('./routes/alojamentosRoutes'); 
-const resersaRoutes = require('./routes/reservaRoutes');
+const reservaRoutes = require('./routes/reservaRoutes');
 const avaliacoesRoutes = require('./routes/avaliacoesRoutes');
 const eventosRoutes = require('./routes/eventosRoutes');
 
@@ -16,7 +16,7 @@ app.use(express.json());
 
 app.use('/utilizadores', utilizadorRoutes);
 app.use('/alojamentos', alojamentoRoutes); 
-app.use('/reservas', resersaRoutes);
+app.use('/reservas', reservaRoutes);
 app.use('/avaliacoes', avaliacoesRoutes);
 app.use('/eventos', eventosRoutes);
 

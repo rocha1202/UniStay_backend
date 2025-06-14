@@ -59,79 +59,85 @@ router.post('/', autenticarToken, async (req, res) => {
 
 // Ver reservas (estudante ou facilitador)
 router.get('/minhas', autenticarToken, async (req, res) => {
-    const userId = req.utilizador.id;
-    const userType = req.utilizador.tipo;
+  const userId = req.utilizador.id;
+  const userType = req.utilizador.tipo;
 
-    if (userType === 'estudante') {
-        const reservas = await Reservation.findByUser (userId);
-        // se não houver reservas, retornar uma mensagem amigável
-        if (reservas.length === 0) {
-            return res.status(404).json({ message: 'Nenhuma reserva encontrada' });
-        }
-        return res.json(reservas);
-    } else if (userType === 'facilitador') {
-        const reservas = await Reservation.findByFacilitador(userId);
-                if (reservas.length === 0) {
-            return res.status(404).json({ message: 'Nenhuma reserva encontrada' });
-        }
-        return res.json(reservas);
-    } else {
-        return res.status(403).json({ error: 'Acesso restrito' });
+  if (userType === 'estudante') {
+    const reservas = await Reservation.findByUser(userId);
+    // se não houver reservas, retornar uma mensagem amigável
+    if (reservas.length === 0) {
+      return res.status(404).json({ message: 'Nenhuma reserva encontrada' });
     }
+    return res.json(reservas);
+  } else if (userType === 'facilitador') {
+    const reservas = await Reservation.findByFacilitador(userId);
+    if (reservas.length === 0) {
+      return res.status(404).json({ message: 'Nenhuma reserva encontrada' });
+    }
+    return res.json(reservas);
+  } else {
+    return res.status(403).json({ error: 'Acesso restrito' });
+  }
 });
 
 
 // Alterar estado da reserva (facilitador)
 router.put('/:id', autenticarToken, async (req, res) => {
-    if (req.utilizador.tipo !== 'facilitador') {
-        return res.status(403).json({ error: 'Apenas facilitadores podem alterar o estado das reservas' });
+  if (req.utilizador.tipo !== 'facilitador') {
+    return res.status(403).json({ error: 'Apenas facilitadores podem alterar o estado das reservas' });
+  }
+
+  const { id } = req.params;
+
+  try {
+    // Verifica se a reserva existe e pertence ao facilitador
+    const reserva = await Reservation.findById(id);
+
+    if (!reserva) {
+      return res.status(404).json({ error: 'Reserva não encontrada' });
     }
 
-    const { id } = req.params;
+    const facilitadorId = await Reservation.findUserByAccommodationId(reserva.accommodation_id);
 
-    try {
-        // Verifica se a reserva existe e pertence ao facilitador
-        const reserva = await Reservation.findById(id);
-
-        if (!reserva) {
-            return res.status(404).json({ error: 'Reserva não encontrada' });
-        }
-
-        let novoEstado, titulo, mensagem;
-
-        if (reserva.estado === 'confirmada') {
-            novoEstado = 'cancelada';
-            titulo = 'Reserva cancelada';
-            mensagem = 'A tua reserva foi cancelada pelo facilitador.';
-        } else {
-            novoEstado = 'confirmada';
-            titulo = 'Reserva confirmada';
-            mensagem = 'A tua reserva foi confirmada pelo facilitador.';
-        }
-
-        const sucesso = await Reservation.updateEstado(id, req.utilizador.id, novoEstado);
-        if (!sucesso) {
-            console.error('Falha ao atualizar o estado da reserva');
-            return res.status(500).json({ error: 'Não foi possível atualizar o estado da reserva' });
-        }
-
-        // Notificar o estudante
-        const notificationSuccess = await Notification.create({
-            user_id: reserva.user_id,
-            titulo,
-            mensagem
-        });
-
-        if (!notificationSuccess) {
-            console.error('Falha ao criar notificação');
-            return res.status(500).json({ error: 'Não foi possível criar a notificação' });
-        }
-
-        res.json({ message: `Reserva ${novoEstado} com sucesso.` });
-    } catch (error) {
-        console.error('Erro ao alterar estado da reserva:', error);
-        res.status(500).json({ error: 'Erro interno ao alterar estado da reserva' });
+    //se o facilitador do token diferente do facilitadorId da erro
+    if (facilitadorId !== req.utilizador.id) {
+      return res.status(403).json({ error: 'Não tens permissão para alterar esta reserva' });
     }
+    let novoEstado, titulo, mensagem;
+
+    if (reserva.estado === 'confirmada') {
+      novoEstado = 'cancelada';
+      titulo = 'Reserva cancelada';
+      mensagem = 'A tua reserva foi cancelada pelo facilitador.';
+    } else {
+      novoEstado = 'confirmada';
+      titulo = 'Reserva confirmada';
+      mensagem = 'A tua reserva foi confirmada pelo facilitador.';
+    }
+
+    const sucesso = await Reservation.updateEstado(id, req.utilizador.id, novoEstado);
+    if (!sucesso) {
+      console.error('Falha ao atualizar o estado da reserva');
+      return res.status(500).json({ error: 'Não foi possível atualizar o estado da reserva' });
+    }
+
+    // Notificar o estudante
+    const notificationSuccess = await Notification.create({
+      user_id: reserva.user_id,
+      titulo,
+      mensagem
+    });
+
+    if (!notificationSuccess) {
+      console.error('Falha ao criar notificação');
+      return res.status(500).json({ error: 'Não foi possível criar a notificação' });
+    }
+
+    res.json({ message: `Reserva ${novoEstado} com sucesso.` });
+  } catch (error) {
+    console.error('Erro ao alterar estado da reserva:', error);
+    res.status(500).json({ error: 'Erro interno ao alterar estado da reserva' });
+  }
 });
 
 module.exports = router;
