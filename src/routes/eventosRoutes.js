@@ -1,15 +1,17 @@
 const express = require('express');
 const autenticarToken = require('../middleware/auth');
 const Eventos = require('../models/eventosModel');
+const Notification = require('../models/notificacaoModel.js');
 const e = require('express');
 
 const router = express.Router();
 
+//criar evento
 router.post('/', autenticarToken, async (req, res) => {
     const { titulo, descricao, tipo, data } = req.body;
     const user_id = req.utilizador.id; // ID do utilizador autenticado
 
-    // Validação manual
+    // Validação campo a campo
     if (!titulo || typeof titulo !== 'string' || titulo.length < 3) {
         return res.status(400).json({ error: 'Título é obrigatório e deve ter pelo menos 3 caracteres.' });
     }
@@ -49,7 +51,16 @@ router.post('/', autenticarToken, async (req, res) => {
 // Listar e pesquisar eventos
 router.get('/', async (req, res) => {
     try {
-        const eventos = await Eventos.listAll({ tipo: req.query.tipo, data: req.query.data });
+
+        const filtros = {
+            titulo: req.query.titulo,
+            descricao: req.query.descricao,
+            tipo: req.query.tipo,
+            data: req.query.data
+        };
+
+
+        const eventos = await Eventos.listAll(filtros);
         if (!eventos || eventos.length === 0) {
             return res.status(404).json({ error: 'Nenhum evento encontrado.' });
         }
@@ -86,13 +97,13 @@ router.post('/:id', autenticarToken, async (req, res) => {
 // Ver eventos do estudante inscrito
 router.get('/minhas', autenticarToken, async (req, res) => {
     try {
-  if (req.utilizador.tipo !== 'estudante') {
-    return res.status(403).json({ error: 'Apenas estudnates podem acessar.' });
-  }
+        if (req.utilizador.tipo !== 'estudante') {
+            return res.status(403).json({ error: 'Apenas estudnates podem acessar.' });
+        }
 
-  const eventos = await Eventos.myEvents(req.utilizador.id);
-  res.json(eventos);
-}
+        const eventos = await Eventos.myEvents(req.utilizador.id);
+        res.json(eventos);
+    }
     catch (error) {
         console.error('Erro ao listar eventos do estudante:', error);
         res.status(500).json({ error: 'Erro ao listar eventos do estudante.' });
@@ -108,7 +119,7 @@ router.delete('/:id', autenticarToken, async (req, res) => {
         if (!evento) {
             return res.status(404).json({ error: 'Evento não encontrado.' });
         }
-        const id =evento.user_id;
+        const id = evento.user_id;
         if (req.utilizador.tipo !== 'admin' && req.utilizador.id !== id) {
             console.log(req.utilizador.tipo, req.utilizador.id, id);
             return res.status(403).json({ error: 'Apenas administradores ou o facilitador do evento podem apagar.' });
@@ -116,11 +127,27 @@ router.delete('/:id', autenticarToken, async (req, res) => {
 
         const result = await Eventos.delete(req.params.id);
         if (result.affectedRows === 0) {
-            return res.status(404).json({ error: 'Evento não encontrado.' });
+            return res.status(404).json({ error: 'Não conseguiu apagar.' });
         }
 
-        //notifica quem está inscrito no evento (FALTA)
-        
+        //notifica quem está inscrito no evento
+        // ve quais utilizadores estão inscritos no evento
+        const inscritos = await Eventos.getInscritos(req.params.id);
+        if (inscritos.length < 0) {
+            return res.status(404).json({ error: 'Nenhum utilizador inscrito neste evento.' });
+        };
+        //notifica cada utilizador inscrito
+        let titulo, mensagem;
+        titulo = 'Evento apagado';
+        mensagem = `O evento ${evento.titulo} foi apagado.`;
+        for (const inscrito of inscritos) {
+            await Notification.create({
+                user_id: inscrito.user_id,
+                titulo,
+                mensagem
+            });
+        }
+
         res.status(200).json({ message: 'Evento apagado com sucesso.' });
     } catch (error) {
         console.error('Erro ao apagar evento:', error);

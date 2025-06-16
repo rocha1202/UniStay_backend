@@ -13,18 +13,28 @@ class Event {
         return { id: result.insertId, titulo, descricao, tipo, data, user_id };
     }
 
-    static async listAll({ tipo, data }) {
+    static async listAll(filtros) {
         let query = 'SELECT * FROM Events WHERE 1=1';
         const params = [];
 
-        if (tipo) {
+        if (filtros.titulo) {
+            query += ' AND titulo LIKE ?';
+            params.push(`%${filtros.titulo}%`);
+        }
+
+        if (filtros.descricao) {
+            query += ' AND descricao LIKE ?';
+            params.push(`%${filtros.descricao}%`);
+        }
+
+        if (filtros.tipo) {
             query += ' AND tipo = ?';
             params.push(tipo);
         }
 
-        if (data) {
-            query += ' AND DATE(data) = ?';
-            params.push(data);
+        if (filtros.data) {
+            query += ' AND data = ?';
+            params.push(filtros.data);
         }
 
         const [rows] = await db.execute(query, params);
@@ -56,8 +66,18 @@ class Event {
         return result.affectedRows > 0;
     }
     static async findByIdF(id) {
-        const [result] =await db.execute('select user_id from events where id =?',[id]);
+        const [result] = await db.execute('select user_id from events where id =?', [id]);
         return result[0];
+    }
+    static async getInscritos(id) {
+        const query = `
+            SELECT u.id, u.nome, u.email
+            FROM EventParticipation ep
+            JOIN Users u ON ep.user_id = u.id
+            WHERE ep.event_id = ?
+        `;
+        const [rows] = await db.execute(query, [id]);
+        return rows;
     }
 }
 
