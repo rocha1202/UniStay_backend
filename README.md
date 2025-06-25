@@ -66,10 +66,6 @@ Servidor por padrão:
 
 ## 📬 API Documentada no Postman
 
-Importa a coleção:
-
-📁 [`UniStay_API_Postman_Collection.json`](./docs/UniStay_API_Postman_Collection.json)
-
 Inclui:
 - Todas as rotas
 - Agrupamento por funcionalidade
@@ -79,4 +75,4 @@ Inclui:
 
 ## 💡 Observações
 
-Este projeto foi desenvolvido como parte de uma unidade curricular (PPW2) e simula uma plataforma real de apoio ao alojamento estudantil com integração académica.
+Este projeto foi desenvolvido como parte de uma unidade curricular (Programação Web 2) e simula uma plataforma real de apoio ao alojamento estudantil com integração académica.
